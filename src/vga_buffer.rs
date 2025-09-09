@@ -22,10 +22,10 @@ pub enum Color {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(transparent)]
-struct ColorCode(u8);
+pub struct ColorCode(u8);
 
 impl ColorCode {
-    fn new(foreground: Color, backbround: Color) -> Self {
+    pub fn new(foreground: Color, backbround: Color) -> Self {
         ColorCode((backbround as u8) << 4 | (foreground as u8))
     }
 }
@@ -54,12 +54,9 @@ pub struct Writer {
 }
 
 impl Writer {
-    pub fn new_writer_red() -> Self {
-        Writer { 
-            column_position: 0, 
-            color_code: ColorCode::new(Color::Red, Color::Black),
-            buffer: unsafe { &mut *(0xb8000 as *mut Buffer) }
-        }
+
+    pub fn set_color(&mut self, color: ColorCode) {
+        self.color_code = color;
     }
 
     pub fn write_byte(&mut self, byte: u8) {

@@ -1,25 +1,23 @@
 #![no_std]
 #![no_main]
 
-use core::panic::PanicInfo;
+mod vga_buffer;
 
-static HELLO: &[u8] = b"Hello World!";
+use core::panic::PanicInfo;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    let vga_buffer = 0xb8000 as *mut u8;
-    
-    for (i, &byte) in HELLO.iter().enumerate() {
-        unsafe {
-            *vga_buffer.offset(i as isize * 2) = byte;
-            *vga_buffer.offset(i as isize * 2 + 1) = 0xb; // color of output character
-        }
-    }
-
-    loop {}
+    use core::fmt::Write;
+    write!(vga_buffer::WRITER.lock(), "Hello Writer!\nHello New Line!\n").unwrap();
+    println!("Hello {}", "println!");
+    panic!("Wooo!! This panic is intentional!!");
+    // loop {}
 }
 
 #[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
+fn panic(info: &PanicInfo) -> ! {
+    use core::fmt::Write;
+    let mut red_writer = vga_buffer::Writer::new_writer_red();
+    write!(red_writer, "{}", info).unwrap();
     loop {}
 }

@@ -1,5 +1,8 @@
 #![no_std]
 #![no_main]
+#![feature(custom_test_frameworks)]
+#![test_runner(crate::test_runner)]
+#![reexport_test_harness_main = "test_main"] // generate and call "test_main" instead of "main" when testing
 
 mod vga_buffer;
 
@@ -7,11 +10,12 @@ use core::panic::PanicInfo;
 
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
-    use core::fmt::Write;
-    write!(vga_buffer::WRITER.lock(), "Hello Writer!\nHello New Line!\n").unwrap();
-    print!("Hello                  {}", "println!");
-    panic!("This panic is intentional!!");
-    // loop {}
+    println!("Hello {}", "println!");
+
+    #[cfg(test)]
+    test_main();
+
+    loop {}
 }
 
 #[panic_handler]
@@ -22,4 +26,19 @@ fn panic(info: &PanicInfo) -> ! {
     writer.set_color(vga_buffer::ColorCode::new(Color::Red, Color::Black));
     write!(writer, "{}", info).unwrap();
     loop {}
+}
+
+#[cfg(test)]
+pub fn test_runner(tests: &[&dyn Fn()]) {
+    println!("Running {} tests", tests.len());
+    for test in tests {
+        test();
+    }
+}
+
+#[test_case]
+fn trivial_assertion() {
+    print!("trivial assertion... ");
+    assert_eq!(1, 1);
+    println!("[ok]");
 }

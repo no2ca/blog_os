@@ -8,3 +8,6 @@ target = "x86_64-akane.json"
 
 [target.'cfg(target_os = "none")']
 runner = "bootimage runner"
+
+[package.metadata.bootimage]
+test-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04"]

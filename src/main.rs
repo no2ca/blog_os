@@ -30,3 +30,9 @@ fn panic(info: &PanicInfo) -> ! {
     write!(writer, "{}", info).unwrap();
     loop {}
 }
+
+#[cfg(test)]
+#[panic_handler]
+fn panic(info: &PanicInfo) -> ! {
+    akane::test_panic_handler(info)
+}

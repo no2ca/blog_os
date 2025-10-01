@@ -13,10 +13,17 @@ use core::panic::PanicInfo;
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     println!("Hello {}", "println!");
+    
+    // initialize IDT
+    akane::init();
+    
+    // invoke a breakpoint exeption
+    x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
     test_main();
 
+    println!("It did not crash!");
     loop {}
 }
 

@@ -20,7 +20,6 @@ pub extern "C" fn _start() -> ! {
     loop {}
 }
 
-#[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     use crate::vga_buffer::Color;
@@ -29,10 +28,4 @@ fn panic(info: &PanicInfo) -> ! {
     writer.set_color(vga_buffer::ColorCode::new(Color::Red, Color::Black));
     write!(writer, "{}", info).unwrap();
     loop {}
-}
-
-#[cfg(test)]
-#[panic_handler]
-fn panic(info: &PanicInfo) -> ! {
-    akane::test_panic_handler(info)
 }

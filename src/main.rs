@@ -17,8 +17,12 @@ pub extern "C" fn _start() -> ! {
     // initialize IDT
     akane::init();
     
+    // invoke a double fault exeption
+    unsafe {
+        *(0xdeadbeef as *mut u8) = 42;
+    }
     // invoke a breakpoint exeption
-    x86_64::instructions::interrupts::int3();
+    // x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
     test_main();

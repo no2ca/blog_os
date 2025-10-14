@@ -18,18 +18,18 @@ pub extern "C" fn _start() -> ! {
     akane::init();
     
     // provoke a stack overflow
+    /*
     #[allow(unconditional_recursion)]
     fn stack_overflow() {
         stack_overflow();
     }
     stack_overflow();
+    */
     
     // invoke a double fault exeption
-    /*
     unsafe {
         *(0xdeadbeef as *mut u8) = 42;
     }
-    */
 
     // invoke a breakpoint exeption
     // x86_64::instructions::interrupts::int3();

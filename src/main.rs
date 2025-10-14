@@ -27,15 +27,20 @@ pub extern "C" fn _start() -> ! {
     */
     
     // invoke a double fault exeption
-    unsafe {
-        *(0xdeadbeef as *mut u8) = 42;
-    }
+    // unsafe {
+    //     *(0xdeadbeef as *mut u8) = 42;
+    // }
 
     // invoke a breakpoint exeption
     // x86_64::instructions::interrupts::int3();
 
     #[cfg(test)]
     test_main();
+
+    loop {
+        use akane::print;
+        print!("-");
+    }
 
     println!("It did not crash!");
     loop {}

@@ -2,7 +2,7 @@
 #![no_main]
 
 use core::panic::PanicInfo;
-use akane::{QemuExitCode, exit_qemu, serial_println, serial_print};
+use blog_os::{QemuExitCode, exit_qemu, serial_println, serial_print};
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {

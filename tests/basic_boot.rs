@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![test_runner(akane::test_runner)]
+#![test_runner(blog_os::test_runner)]
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
@@ -14,11 +14,11 @@ pub extern "C" fn _start() -> ! {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    akane::test_panic_handler(info)
+    blog_os::test_panic_handler(info)
 }
 
 
-use akane::println;
+use blog_os::println;
 
 #[test_case]
 fn test_println() {

@@ -1,7 +1,7 @@
 #![no_std]
 #![no_main]
 #![feature(custom_test_frameworks)]
-#![test_runner(akane::test_runner)]
+#![test_runner(blog_os::test_runner)]
 #![reexport_test_harness_main = "test_main"] // generate and call "test_main" instead of "main" when testing
 #![allow(unused_imports)]
 
@@ -15,7 +15,7 @@ pub extern "C" fn _start() -> ! {
     println!("Hello {}", "println!");
     
     // initialize IDT
-    akane::init();
+    blog_os::init();
     
     // provoke a stack overflow
     /*
@@ -37,10 +37,6 @@ pub extern "C" fn _start() -> ! {
     #[cfg(test)]
     test_main();
 
-    loop {
-        use akane::print;
-        print!("-");
-    }
 
     println!("It did not crash!");
     loop {}

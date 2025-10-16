@@ -3,13 +3,13 @@
 #![no_main]
 
 use core::panic::PanicInfo;
-use akane::serial_print;
+use blog_os::serial_print;
 
 // tests that kernel stack overflow doesn't occors a triple fault
 #[unsafe(no_mangle)]
 pub extern "C" fn _start() -> ! {
     serial_print!("stack_overflow::stack_overflow...\t");
-    akane::gdt::init();
+    blog_os::gdt::init();
     init_test_idt();
     
     // trigger a stack overflow
@@ -20,7 +20,7 @@ pub extern "C" fn _start() -> ! {
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    akane::test_panic_handler(info)
+    blog_os::test_panic_handler(info)
 }
 
 #[allow(unconditional_recursion)]
@@ -38,7 +38,7 @@ lazy_static! {
         unsafe {
             idt.double_fault
                 .set_handler_fn(test_double_fault_handler)
-                .set_stack_index(akane::gdt::DOUBLE_FAULT_IST_INDEX);
+                .set_stack_index(blog_os::gdt::DOUBLE_FAULT_IST_INDEX);
         }
         idt
     };
@@ -48,7 +48,7 @@ pub fn init_test_idt() {
     TEST_IDT.load();
 }
 
-use akane::{exit_qemu, QemuExitCode, serial_println};
+use blog_os::{exit_qemu, QemuExitCode, serial_println};
 use x86_64::structures::idt::InterruptStackFrame;
 
 extern "x86-interrupt" fn test_double_fault_handler(

@@ -3,19 +3,6 @@
 version = 4
 
 [[package]]
-name = "akane"
-version = "0.1.0"
-dependencies = [
- "bootloader",
- "lazy_static",
- "pic8259",
- "spin 0.5.2",
- "uart_16550",
- "volatile 0.2.7",
- "x86_64",
-]
-
-[[package]]
 name = "bit_field"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -32,6 +19,19 @@ name = "bitflags"
 version = "2.9.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2261d10cca569e4643e526d8dc2e62e433cc8aba21ab764233731f8d369bf394"
+
+[[package]]
+name = "blog_os"
+version = "0.1.0"
+dependencies = [
+ "bootloader",
+ "lazy_static",
+ "pic8259",
+ "spin 0.5.2",
+ "uart_16550",
+ "volatile 0.2.7",
+ "x86_64",
+]
 
 [[package]]
 name = "bootloader"

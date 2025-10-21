@@ -39,7 +39,7 @@ pub extern "C" fn _start() -> ! {
 
 
     println!("It did not crash!");
-    loop {}
+    blog_os::hlt_loop();
 }
 
 #[panic_handler]
@@ -49,5 +49,5 @@ fn panic(info: &PanicInfo) -> ! {
     let mut writer = vga_buffer::WRITER.lock();
     writer.set_color(vga_buffer::ColorCode::new(Color::Red, Color::Black));
     write!(writer, "{}", info).unwrap();
-    loop {}
+    blog_os::hlt_loop();
 }

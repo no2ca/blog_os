@@ -15,6 +15,7 @@ pub fn _print(args: ::core::fmt::Arguments) {
     use core::fmt::Write;
     use x86_64::instructions::interrupts;
 
+    // 出力中の割り込みを受け付けないことでデッドロックを防ぐ
     interrupts::without_interrupts(|| {         
         SERIAL1
             .lock()

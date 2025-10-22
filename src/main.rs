@@ -9,9 +9,12 @@ mod vga_buffer;
 mod serial;
 
 use core::panic::PanicInfo;
+use bootloader::{BootInfo, entry_point};
+
+entry_point!(kernel_main);
 
 #[unsafe(no_mangle)]
-pub extern "C" fn _start() -> ! {
+fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("Hello {}", "println!");
     
     // initialize IDT

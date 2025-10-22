@@ -16,6 +16,7 @@ lazy_static!{
             .set_handler_fn(timer_interrupt_handler);
         idt[InterruptIndex::Keyboard.as_usize()]
             .set_handler_fn(keyboard_interrupt_handler);
+        idt.page_fault.set_handler_fn(page_fault_handler);
         idt
     };
 }
@@ -52,6 +53,23 @@ pub static PICS: spin::Mutex<ChainedPics> =
         ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET)
     });
 
+use x86_64::structures::idt::PageFaultErrorCode;
+use crate::hlt_loop;
+
+extern "x86-interrupt" fn page_fault_handler(
+    stack_frame: InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
+    // ページフォルトするとCR2にページフォルト下仮想アドレスが入る
+    use x86_64::registers::control::Cr2;
+    
+    println!("EXEPTION: PAGE FAULT");
+    println!("Accessed Address: {:?}", Cr2::read());
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    hlt_loop();
+}
+
 extern "x86-interrupt" fn breakpoint_handler(
     stack_frame: InterruptStackFrame) {
     println!("EXEPTION: BREAKPOINT\n{:#?}", stack_frame);
@@ -62,10 +80,6 @@ extern "x86-interrupt" fn double_fault_handler(
 {
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
-
-//
-// Timer Interrupt Handler
-//
 
 extern "x86-interrupt" fn timer_interrupt_handler(
     _stack_frame: InterruptStackFrame)

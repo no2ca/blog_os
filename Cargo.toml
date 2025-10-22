@@ -23,7 +23,7 @@ panic = "abort"
 panic = "abort"
 
 [dependencies]
-bootloader = "0.9"
+bootloader = { version = "0.9", features = ["map_physical_memory"] }
 volatile = "0.2.6"
 spin = "0.5.2"
 x86_64 = "0.14.2"
@@ -34,6 +34,9 @@ pc-keyboard = "0.7.0"
 [dependencies.lazy_static]
 version = "1.0"
 features = ["spin_no_std"]
+
+[package.metadata.bootloader]
+physical-memory-offset = "0x0000f00000000000" # 物理アドレスにこの値を足すと仮想アドレスが得られる
 
 [package.metadata.bootimage]
 test-args = [

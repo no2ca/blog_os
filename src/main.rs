@@ -5,21 +5,22 @@
 #![reexport_test_harness_main = "test_main"] // generate and call "test_main" instead of "main" when testing
 #![allow(unused_imports)]
 
-mod vga_buffer;
 mod serial;
+mod vga_buffer;
 
-use core::panic::PanicInfo;
 use bootloader::{BootInfo, entry_point};
+use core::panic::PanicInfo;
+use x86_64::{VirtAddr, structures::paging::PageTable};
 
 entry_point!(kernel_main);
 
 #[unsafe(no_mangle)]
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     println!("Hello {}", "println!");
-    
-    // initialize IDT
+
+    // initialize IDT, GDT, PICS, interrputs
     blog_os::init();
-    
+
     // provoke a stack overflow
     /*
     #[allow(unconditional_recursion)]
@@ -28,7 +29,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     }
     stack_overflow();
     */
-    
+
     // invoke a page fault exeption
     // let ptr = 0x2031b2 as *mut u8;
     // unsafe {
@@ -40,14 +41,31 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     // invoke a breakpoint exeption
     // x86_64::instructions::interrupts::int3();
-    
-    use x86_64::registers::control::Cr3;
-    let (level_4_page_table, _) = Cr3::read();
-    println!("Level 4 page table at: {:#?}", level_4_page_table.start_address());
+
+    use blog_os::memory::{active_level_4_table, translate_addr};
+
+    let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
+    println!("phys_mem_offset: {:#?}", phys_mem_offset);
+
+    let addresses = [
+        // the identity-mapped vga buffer page
+        0xb8000,
+        // some code page
+        0x201008,
+        // some stack page
+        0x0100_0020_1a10,
+        // virtual address mapped to physical address 0
+        boot_info.physical_memory_offset,
+    ];
+
+    for &address in &addresses {
+        let virt = VirtAddr::new(address);
+        let phys = unsafe { translate_addr(virt, phys_mem_offset) };
+        println!("{:?} -> {:?}", virt, phys);
+    }
 
     #[cfg(test)]
     test_main();
-
 
     println!("It did not crash!");
     blog_os::hlt_loop();

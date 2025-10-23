@@ -1,8 +1,8 @@
 #![no_std]
 #![no_main]
 
+use blog_os::{QemuExitCode, exit_qemu, serial_print, serial_println};
 use core::panic::PanicInfo;
-use blog_os::{QemuExitCode, exit_qemu, serial_println, serial_print};
 
 #[panic_handler]
 fn panic(_info: &PanicInfo) -> ! {

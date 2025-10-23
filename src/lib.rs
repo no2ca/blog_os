@@ -7,11 +7,11 @@
 
 use core::panic::PanicInfo;
 
-pub mod vga_buffer;
-pub mod serial;
-pub mod interrupts;
 pub mod gdt;
+pub mod interrupts;
 pub mod memory;
+pub mod serial;
+pub mod vga_buffer;
 
 pub fn init() {
     gdt::init();
@@ -23,7 +23,7 @@ pub fn init() {
 pub fn hlt_loop() -> ! {
     loop {
         x86_64::instructions::hlt();
-    }    
+    }
 }
 
 //

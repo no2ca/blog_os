@@ -1,21 +1,19 @@
-
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
-use lazy_static::lazy_static;
 use crate::{print, println};
+use lazy_static::lazy_static;
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
-lazy_static!{
+lazy_static! {
     static ref IDT: InterruptDescriptorTable = {
         let mut idt = InterruptDescriptorTable::new();
         idt.breakpoint.set_handler_fn(breakpoint_handler);
         use crate::gdt;
         unsafe {
-            idt.double_fault.set_handler_fn(double_fault_handler)
+            idt.double_fault
+                .set_handler_fn(double_fault_handler)
                 .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         }
-        idt[InterruptIndex::Timer.as_usize()]
-            .set_handler_fn(timer_interrupt_handler);
-        idt[InterruptIndex::Keyboard.as_usize()]
-            .set_handler_fn(keyboard_interrupt_handler);
+        idt[InterruptIndex::Timer.as_usize()].set_handler_fn(timer_interrupt_handler);
+        idt[InterruptIndex::Keyboard.as_usize()].set_handler_fn(keyboard_interrupt_handler);
         idt.page_fault.set_handler_fn(page_fault_handler);
         idt
     };
@@ -48,13 +46,11 @@ impl InterruptIndex {
     }
 }
 
-pub static PICS: spin::Mutex<ChainedPics> = 
-    spin::Mutex::new(unsafe {
-        ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET)
-    });
+pub static PICS: spin::Mutex<ChainedPics> =
+    spin::Mutex::new(unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) });
 
-use x86_64::structures::idt::PageFaultErrorCode;
 use crate::hlt_loop;
+use x86_64::structures::idt::PageFaultErrorCode;
 
 extern "x86-interrupt" fn page_fault_handler(
     stack_frame: InterruptStackFrame,
@@ -62,7 +58,7 @@ extern "x86-interrupt" fn page_fault_handler(
 ) {
     // ページフォルトするとCR2にページフォルト下仮想アドレスが入る
     use x86_64::registers::control::Cr2;
-    
+
     println!("EXEPTION: PAGE FAULT");
     println!("Accessed Address: {:?}", Cr2::read());
     println!("Error Code: {:?}", error_code);
@@ -70,22 +66,20 @@ extern "x86-interrupt" fn page_fault_handler(
     hlt_loop();
 }
 
-extern "x86-interrupt" fn breakpoint_handler(
-    stack_frame: InterruptStackFrame) {
+extern "x86-interrupt" fn breakpoint_handler(stack_frame: InterruptStackFrame) {
     println!("EXEPTION: BREAKPOINT\n{:#?}", stack_frame);
 }
 
 extern "x86-interrupt" fn double_fault_handler(
-    stack_frame: InterruptStackFrame, _error_code: u64) -> !
-{
+    stack_frame: InterruptStackFrame,
+    _error_code: u64,
+) -> ! {
     panic!("EXCEPTION: DOUBLE FAULT\n{:#?}", stack_frame);
 }
 
-extern "x86-interrupt" fn timer_interrupt_handler(
-    _stack_frame: InterruptStackFrame)
-{
+extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
     crate::print!(".");
-    
+
     // notify EOI
     unsafe {
         PICS.lock()
@@ -93,23 +87,19 @@ extern "x86-interrupt" fn timer_interrupt_handler(
     }
 }
 
-extern "x86-interrupt" fn keyboard_interrupt_handler(
-    _stack_frame: InterruptStackFrame) 
-{
-    use x86_64::instructions::port::Port;
-    use pc_keyboard::{layouts, DecodedKey, HandleControl, Keyboard, ScancodeSet1};
+extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    use pc_keyboard::{DecodedKey, HandleControl, Keyboard, ScancodeSet1, layouts};
     use spin::Mutex;
-    
+    use x86_64::instructions::port::Port;
+
     // JIS配列を使用
     lazy_static! {
         static ref KEYBOARD: Mutex<Keyboard<layouts::Jis109Key, ScancodeSet1>> =
-            Mutex::new(
-                Keyboard::new(
-                    ScancodeSet1::new(), 
-                    layouts::Jis109Key, 
-                    HandleControl::Ignore
-                )
-            );
+            Mutex::new(Keyboard::new(
+                ScancodeSet1::new(),
+                layouts::Jis109Key,
+                HandleControl::Ignore
+            ));
     }
 
     let mut keyboard = KEYBOARD.lock();

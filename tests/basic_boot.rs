@@ -17,7 +17,6 @@ fn panic(info: &PanicInfo) -> ! {
     blog_os::test_panic_handler(info)
 }
 
-
 use blog_os::println;
 
 #[test_case]

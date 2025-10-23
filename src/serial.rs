@@ -1,6 +1,6 @@
-use uart_16550::SerialPort;
-use spin::Mutex;
 use lazy_static::lazy_static;
+use spin::Mutex;
+use uart_16550::SerialPort;
 
 lazy_static! {
     pub static ref SERIAL1: Mutex<SerialPort> = {
@@ -16,7 +16,7 @@ pub fn _print(args: ::core::fmt::Arguments) {
     use x86_64::instructions::interrupts;
 
     // 出力中の割り込みを受け付けないことでデッドロックを防ぐ
-    interrupts::without_interrupts(|| {         
+    interrupts::without_interrupts(|| {
         SERIAL1
             .lock()
             .write_fmt(args)

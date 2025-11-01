@@ -8,9 +8,10 @@
 mod serial;
 mod vga_buffer;
 
+use blog_os::memory;
 use bootloader::{BootInfo, entry_point};
 use core::panic::PanicInfo;
-use x86_64::{VirtAddr, structures::paging::PageTable};
+use x86_64::{VirtAddr, structures::paging::{PageTable, Translate}, structures::paging::Page};
 
 entry_point!(kernel_main);
 
@@ -42,10 +43,20 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     // invoke a breakpoint exeption
     // x86_64::instructions::interrupts::int3();
 
-    use blog_os::memory::{active_level_4_table, translate_addr};
+    use blog_os::memory;
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     println!("phys_mem_offset: {:#?}", phys_mem_offset);
+    
+    let mut mapper = unsafe {
+        memory::init(phys_mem_offset)
+    };
+    let mut frame_allocator = memory::EmptyFrameAllocator;
+
+    let page = Page::containing_address(VirtAddr::new(0));
+    memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
+    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
+    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e)};
 
     let addresses = [
         // the identity-mapped vga buffer page
@@ -56,11 +67,13 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
         0x0100_0020_1a10,
         // virtual address mapped to physical address 0
         boot_info.physical_memory_offset,
+        
+        0x100,
     ];
 
     for &address in &addresses {
         let virt = VirtAddr::new(address);
-        let phys = unsafe { translate_addr(virt, phys_mem_offset) };
+        let phys = mapper.translate_addr(virt);
         println!("{:?} -> {:?}", virt, phys);
     }
 

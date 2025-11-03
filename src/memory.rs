@@ -1,5 +1,50 @@
 use x86_64::{VirtAddr, structures::paging::{OffsetPageTable, PageTable}};
 
+use bootloader::bootinfo::MemoryMap;
+
+/// A FrameAllocator that returns usable frames from the bootloader's memory map.
+pub struct BootInfoFrameAllocator {
+    memory_map: &'static MemoryMap,
+    next: usize,
+}
+
+use bootloader::bootinfo::MemoryRegionType;
+impl BootInfoFrameAllocator {
+    /// Create a FrameAllocator from the passed memory map.
+    ///
+    /// This function is unsafe because the caller must guarantee that the passed
+    /// memory map is valid. The main requirement is that all frames that are marked
+    /// as `USABLE` in it are really unused.
+    pub unsafe fn init(memory_map: &'static MemoryMap) -> Self {
+        BootInfoFrameAllocator {
+            memory_map,
+            next: 0,
+        }
+    }
+    
+    /// 利用可能な物理フレームのイテレータを返す
+    /// 
+    /// 特定の型ではなくItemにPhysFrameをもつイテレータの実装が返されることを期待している
+    fn usable_frames(&self) -> impl Iterator<Item = PhysFrame> {
+        let regions = self.memory_map.iter();
+        // ここで使用可能なフレームをフィルタリングする
+        let usable_regions = regions
+            .filter(|r| r.region_type == MemoryRegionType::Usable);
+        let addr_ranges = usable_regions
+            .map(|r| r.range.start_addr()..r.range.end_addr());
+        let frame_address = addr_ranges.flat_map(|r| r.step_by(4096));
+        frame_address.map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
+    }
+}
+
+unsafe impl FrameAllocator<Size4KiB> for BootInfoFrameAllocator {
+    fn allocate_frame(&mut self) -> Option<PhysFrame<Size4KiB>> {
+        let frame = self.usable_frames().nth(self.next);
+        self.next += 1;
+        frame
+    }
+}
+
 use x86_64::{
     PhysAddr,
     structures::paging::{Page, PhysFrame, Mapper, Size4KiB, FrameAllocator}
@@ -12,10 +57,11 @@ pub fn create_example_mapping(
 ) {
     use x86_64::structures::paging::PageTableFlags as Flags;
     
-    let frame = PhysFrame::containing_address(PhysAddr::new(0xb8000));
+    let frame = PhysFrame::containing_address(PhysAddr::new(0xdeadbeef));
     let flags = Flags::PRESENT | Flags::WRITABLE;
     
     let map_to_result = unsafe {
+        // TODO:
         // 使用されているフレームに書き込んでいる
         // テスト用の実装
         mapper.map_to(page, frame, flags, frame_allocator)

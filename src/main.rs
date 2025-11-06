@@ -11,7 +11,11 @@ mod vga_buffer;
 use blog_os::memory;
 use bootloader::{BootInfo, entry_point};
 use core::panic::PanicInfo;
-use x86_64::{VirtAddr, structures::paging::{PageTable, Translate}, structures::paging::Page};
+use x86_64::{
+    VirtAddr,
+    structures::paging::Page,
+    structures::paging::{PageTable, Translate},
+};
 
 entry_point!(kernel_main);
 
@@ -22,43 +26,12 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     // initialize IDT, GDT, PICS, interrputs
     blog_os::init();
 
-    // provoke a stack overflow
-    // #[allow(unconditional_recursion)]
-    // fn stack_overflow() {
-    //     stack_overflow();
-    // }
-    // stack_overflow();
-
-    // invoke a page fault exeption
-    // let ptr = 0x2031b2 as *mut u8;
-    // unsafe {
-    //     let x = *ptr;
-    //     println!("x = {}", x);
-    // }
-    // unsafe { *ptr = 42; }
-    // println!("write worked");
-
-    // invoke a breakpoint exeption
-    // x86_64::instructions::interrupts::int3();
-
     use blog_os::memory;
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     println!("phys_mem_offset: {:#?}", phys_mem_offset);
-    
-    let mut mapper = unsafe {
-        memory::init(phys_mem_offset)
-    };
-    let mut frame_allocator = unsafe {
-        memory::BootInfoFrameAllocator::init(&boot_info.memory_map)
-    };
 
-    let page = Page::containing_address(VirtAddr::new(0));
-    memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
-
-    let page_ptr: *mut u64 = page.start_address().as_mut_ptr();
-    unsafe { page_ptr.offset(400).write_volatile(0x_f021_f077_f065_f04e)};
-
+    let mapper = unsafe { memory::init(phys_mem_offset) };
     let addresses = [
         // the identity-mapped vga buffer page
         0xb8000,
@@ -68,18 +41,12 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
         0x0100_0020_1a10,
         // virtual address mapped to physical address 0
         boot_info.physical_memory_offset,
-        // 0xdeadbeefに対応しているアドレス
-        0x0,
-        0x100,
-        0xfff,
-        // そうでないがマップされているアドレス
-        0x1000,
     ];
 
     for &address in &addresses {
         let virt = VirtAddr::new(address);
         let phys = mapper.translate_addr(virt);
-        println!("{:?} -> {:?}", virt, phys);
+        println!("virt {:?} -> phys {:?}", virt, phys);
     }
 
     #[cfg(test)]

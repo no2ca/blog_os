@@ -5,9 +5,12 @@
 #![reexport_test_harness_main = "test_main"] // generate and call "test_main" instead of "main" when testing
 #![allow(unused_imports)]
 
+extern crate alloc;
+
 mod serial;
 mod vga_buffer;
 
+use alloc::boxed::Box;
 use blog_os::memory;
 use bootloader::{BootInfo, entry_point};
 use core::panic::PanicInfo;
@@ -21,17 +24,17 @@ entry_point!(kernel_main);
 
 #[unsafe(no_mangle)]
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
+    use blog_os::allocator; // new import
+    use blog_os::memory::{self, BootInfoFrameAllocator};
     println!("Hello {}", "println!");
 
     // initialize IDT, GDT, PICS, interrputs
     blog_os::init();
 
-    use blog_os::memory;
-
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     println!("phys_mem_offset: {:#?}", phys_mem_offset);
 
-    let mapper = unsafe { memory::init(phys_mem_offset) };
+    let mut mapper = unsafe { memory::init(phys_mem_offset) };
     let addresses = [
         // the identity-mapped vga buffer page
         0xb8000,
@@ -48,6 +51,15 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
         let phys = mapper.translate_addr(virt);
         println!("virt {:?} -> phys {:?}", virt, phys);
     }
+    
+    let mut frame_allocator = unsafe {
+        BootInfoFrameAllocator::init(&boot_info.memory_map)
+    };
+
+    allocator::init_heap(&mut mapper, &mut frame_allocator)
+        .expect("heap initialization failed");
+
+    let _x = Box::new(41);
 
     #[cfg(test)]
     test_main();
